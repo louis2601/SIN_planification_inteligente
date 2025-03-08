@@ -99,14 +99,14 @@ def all_victims_treated(state):
             return False
     return True
 
-def load_victim_op(state, victim, ambulance):
-    x = state.victims[victim]['location']
+def load_victim_op(state, ambulance):
+    victim = state.victims[state.ambulances[ambulance]['victim']]
+    x = victim['location']
     y = state.ambulances[ambulance]['location']
-    if x == y and state.ambulances[ambulance]['state'] == 'to_victim' and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
+    if x == y and state.ambulances[ambulance]['state'] == 'to_victim' and victim['severity'] <= state.ambulances[ambulance]['capacity']:
         # update state and path
-        hospital = assign_hospital(state, state.ambulances[ambulance]['victim'])
-        path, cost = shortest_path(state, state.victims[state.ambulances[ambulance]['victim']]['location'],
-                                   state.hospitals[hospital]['location'])
+        hospital = assign_hospital(state, victim)
+        path, cost = shortest_path(state, victim['location'], state.hospitals[hospital]['location'])
         if path:
             state.ambulances[ambulance]['current_path'] = path
         else:
@@ -114,7 +114,7 @@ def load_victim_op(state, victim, ambulance):
             return []
         state.ambulances[ambulance]['state'] = "to_hospital"
         state.ambulances[ambulance]['hospital'] = hospital
-        state.victims[victim]['location'] = ambulance
+        state.victims[state.ambulances[ambulance]['victim']]['location'] = ambulance
 
         return state
     else:
@@ -124,9 +124,9 @@ def load_victim_op(state, victim, ambulance):
 def unload_victim_op(state, ambulance):
     x = state.ambulances[ambulance]['location']
     victim = state.ambulances[ambulance]['victim']
-    hospital = state.ambulances[ambulance]['hospital']
+    hospital = state.hospitals[state.ambulances[ambulance]['hospital']]
     print("FINALL", state)
-    if x == state.hospitals[hospital]['location'] and ambulance == state.victims[victim]['location']:
+    if x == hospital['location'] and ambulance == state.victims[victim]['location']:
         state.victims[victim]['location'] = hospital
         # update state, patient treated
         state.ambulances[ambulance]['victim'] = None
@@ -198,9 +198,8 @@ def assign_hospital(state, victim):
     """
     min_distance = float('inf')
     best_hospital = None
-    victim_loc = state.victims[victim]['location']
+    victim_loc = victim['location']
     for hospital, data in state.hospitals.items():
-        print("IWBFPQ", victim_loc)
         if victim_loc in state.coordinates and data['location'] in state.coordinates:
             dist = distance(state.coordinates[victim_loc], state.coordinates[data['location']])
             if dist < min_distance:
@@ -273,7 +272,7 @@ def handle_goal_completion(state, ambulance):
         if first_aid_action:
             moves.extend(first_aid_action)
         #load victim
-        moves.append(('load_victim_op', state.ambulances[ambulance]['victim'], ambulance))
+        moves.append(('load_victim_op', ambulance))
     elif state.ambulances[ambulance]['state'] == "to_hospital":
         #unload
         moves.append(('unload_victim_op', ambulance))
@@ -293,16 +292,9 @@ def treat_all_victims(state):
 
 import pyhop
 
-# Declarar métodos para la tarea 'treat_all_victims'
 pyhop.declare_methods('treat_all_victims', treat_all_victims)
-
-# Declarar métodos para la tarea 'do_step'
 pyhop.declare_methods('do_step', do_step)
-
-# Declarar métodos para la tarea 'handle_goal_completion'
 pyhop.declare_methods('handle_goal_completion', handle_goal_completion)
-
-# Declarar métodos para la tarea 'assign_goals'
 pyhop.declare_methods('assign_goals', assign_goals)
 
 

@@ -75,3 +75,35 @@ def provide_first_aid(state, ambulance, victim):
         return False 
 
 pyhop.declare_operators(move_ambulance, provide_first_aid, load_victim, unload_victim)
+
+#methods
+
+
+def assign_ambulance(state, victim):
+    """
+    Find the nearest available ambulance that can handle the victim's severity.
+
+    Args:
+        state (State): Current problem state.
+        victim (str): ID of the victim.
+
+    Returns:
+        str | bool: Assigned ambulance ID or False if none found.
+    """
+    min_distance = float('inf')
+    best_ambulance = None
+    victim_loc = state.victims[victim]['location']
+
+    for ambulance, data in state.ambulances.items():
+        if (data['available'] and
+                state.victims[victim]['severity'] <= data['capacity'] and
+                victim_loc in state.coordinates and data['location'] in state.coordinates):
+
+            dist = distance(state.coordinates[victim_loc], state.coordinates[data['location']])
+            if dist < min_distance:
+                min_distance = dist
+                best_ambulance = ambulance
+
+    return best_ambulance or False
+
+

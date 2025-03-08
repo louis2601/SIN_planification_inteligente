@@ -96,14 +96,14 @@ def unload_victim_op(state, ambulance):
     x = state.ambulances[ambulance]['location']
     victim = state.ambulances[ambulance]['victim']
     hospital = state.ambulances[ambulance]['hospital']
-
-    if x == hospital['location'] and ambulance == victim['location']:
-        victim['location'] = hospital
+    print("FINALL", state)
+    if x == state.hospitals[hospital]['location'] and ambulance == state.victims[victim]['location']:
+        state.victims[victim]['location'] = hospital
         # update state, patient treated
         state.ambulances[ambulance]['victim'] = None
         state.ambulances[ambulance]['hospital'] = None
         state.ambulances[ambulance]['state'] = "available"
-        state.victims[state.ambulances[ambulance]['victim']]['state'] = "treated"
+        state.victims[victim]['state'] = "treated"
         return state
     else:
         print(f"Victim {victim} is not at the same location as hospital {hospital}")

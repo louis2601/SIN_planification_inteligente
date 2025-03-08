@@ -28,10 +28,30 @@ state1.connections = {
     'L6': []
 }
 
+#operators
+
 def distance(c1, c2):
     x = pow(c1['X'] - c2['X'], 2)
     y = pow(c1['Y'] - c2['Y'], 2)
     return math.sqrt(x + y)
+
+def load_victim(state, victim, ambulance):
+    x = state.victims[victim]['location']
+    y = state.ambulances[ambulance]['location']
+    if x == y and state.ambulances[ambulance]['available'] and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
+        state.victims[victim]['location'] = ambulance
+        state.ambulances[ambulance]['available'] = False
+        return state
+    else:
+        return False
+
+def unload_victim(state, victim, ambulance, hospital):
+    x = state.ambulances[ambulance]['location']
+    if x == state.hospitals[hospital]['location'] and state.victims[victim]['location'] == ambulance:
+        state.victims[victim]['location'] = hospital
+        state.ambulances[ambulance]['available'] = True
+        return state
+
 
 def move_ambulance(state, ambulance, y):
     x = state.ambulances[ambulance]['location']  

@@ -1,5 +1,6 @@
 import math
 import pyhop
+import networkx as nx
 
 state1 = pyhop.State('state1')
 state1.ambulances = {
@@ -35,6 +36,11 @@ def distance(c1, c2):
     x = pow(c1['X'] - c2['X'], 2)
     y = pow(c1['Y'] - c2['Y'], 2)
     return math.sqrt(x + y)
+
+def select_new_city(state, x, y):
+    best = math.inf
+
+
 
 def load_victim(state, victim, ambulance):
     x = state.victims[victim]['location']
@@ -145,3 +151,49 @@ def first_aid_if_necessary(state, victim, ambulance):
 
 pyhop.declare_methods(first_aid_if_necessary)
 
+def move_ambulance_m(state, ambulance, victim):
+    x = state.ambulances[ambulance]['location']
+    y = state.victims[victim]['location']
+    if x != y:
+        z = select_new_city(state, y)
+        return [('move_ambulance', ambulance, z)]
+
+
+def deliver_victim(state, victim):
+    hospital = assign_hospital(state, victim)
+    ambulance = assign_ambulance(state, victim)
+    if not hospital or not ambulance:
+        return False
+
+
+# Create graph and add edges with Euclidean distance as weight
+def create_graph(state):
+    G = nx.Graph()
+    for node in state.coordinates:
+        G.add_node(node)
+
+    for node, neighbors in state.connections.items():
+        for neighbor in neighbors:
+            dist = distance(state.coordinates[node], state.coordinates[neighbor])
+            G.add_edge(node, neighbor, weight=dist)
+
+    return G
+
+
+# Find shortest path using Dijkstra
+def shortest_path(state, start, goal):
+    G = create_graph(state)
+    try:
+        path = nx.shortest_path(G, source=start, target=goal, weight='weight')
+        cost = nx.shortest_path_length(G, source=start, target=goal, weight='weight')
+        return path, cost
+    except nx.NetworkXNoPath:
+        return None, float('inf')
+
+
+# Example usage
+path, cost = shortest_path(state, 'L1', 'L5')
+if path:
+    print(f"Shortest path: {path}, Cost: {cost:.2f}")
+else:
+    print("No valid path found")

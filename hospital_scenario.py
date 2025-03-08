@@ -74,7 +74,7 @@ def load_victim_op(state, victim, ambulance):
     x = state.victims[victim]['location']
     y = state.ambulances[ambulance]['location']
     if x == y and state.ambulances[ambulance]['state'] == 'available' and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
-        state.victims[victim]['location'] = ambulance
+        state.victims[victim]['location'] = y
         state.ambulances[ambulance]['state'] = "to_hospital"
         return state
     else:
@@ -203,7 +203,6 @@ def do_step(state):
         if len(data["current_path"]) > 0:
             next_loc = data["current_path"].pop(0)
             moves.append(('move_ambulance_op', ambulance, next_loc))
-            state.ambulances[ambulance]['location'] = next_loc
 
             if not data["current_path"]:
                 moves.extend(handle_goal_completion(state, ambulance))

@@ -6,8 +6,8 @@ import networkx as nx
 #possible values(victim) for state are: "waiting", "ambulance_assigned", "treated"
 state1 = pyhop.State('state1')
 state1.ambulances = {
-    'A1': {'location': 'L1', 'capacity': 5, 'path': ['L1'], 'state': "", 'current_path': [], 'victim': None, 'hospital': None},
-    'A2': {'location': 'L3', 'capacity': 7, 'path': ['L3'], 'state': "", 'current_path': [], 'victim': None, 'hospital': None},
+    'A1': {'location': 'L1', 'capacity': 5, 'path': ['L1'], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
+    'A2': {'location': 'L3', 'capacity': 7, 'path': ['L3'], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
 }
 state1.victims = {
     'V1': {'location': 'L2', 'severity': 4, 'first_aid_done': False, 'state': "waiting"},
@@ -46,7 +46,6 @@ def create_graph(state):
 
     for node, neighbors in state.connections.items():
         for neighbor in neighbors:
-            print(node, neighbor)
             dist = distance(state.coordinates[node], state.coordinates[neighbor])
             G.add_edge(node, neighbor, weight=dist)
 
@@ -92,7 +91,7 @@ def unload_victim_op(state, victim, ambulance, hospital):
 
 def move_ambulance_op(state, ambulance, y):
     x = state.ambulances[ambulance]['location']
-    if y in state.connection[x]:
+    if y in state.connections[x]:
         state.ambulances[ambulance]['location'] = y
         state.ambulances[ambulance]['path'].append(y)
         return state
@@ -124,7 +123,7 @@ def assign_victim(state, ambulance):
 
     for victim, data in state.victims.items():
         if (data['severity'] <= state.ambulances[ambulance]['capacity'] and
-                data['state'] == "waiting" and state.ambulances[ambulance]['State'] == "available"):
+                data['state'] == "waiting" and state.ambulances[ambulance]['state'] == "available"):
 
             dist = distance(state.coordinates[ambulance_loc], state.coordinates[data['location']])
             if dist < min_distance:

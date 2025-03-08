@@ -19,22 +19,38 @@ state1.coordinates = {
     'L1': {'X': 25, 'Y': 275}, 'L2': {'X': 200, 'Y': 50}, 'L3': {'X': 250, 'Y': 325},
     'L4': {'X': 475, 'Y': 450}, 'L5': {'X': 550, 'Y': 100}, 'L6': {'X': 750, 'Y': 425},
 }
- 
 state1.connections = {
     'L1': ['L2', 'L3'],
     'L2': ['L3', 'L5'],
-    'L3': ['L4', 'L5'],
+    'L3': ['L4'],
     'L4': ['L5'],
-    'L5': ['L6','L2', 'L3'],
-    'L6': ['L2', 'L3'],
+    'L5': ['L6','L2'],
+    'L6': ['L5'],
 }
 
-#operators
+# utility
 
 def distance(c1, c2):
     x = pow(c1['X'] - c2['X'], 2)
     y = pow(c1['Y'] - c2['Y'], 2)
     return math.sqrt(x + y)
+
+# Create graph and add edges with Euclidean distance as weight
+def create_graph(state):
+    G = nx.Graph()
+    for node in state.coordinates:
+        G.add_node(node)
+
+    for node, neighbors in state.connections.items():
+        for neighbor in neighbors:
+            dist = distance(state.coordinates[node], state.coordinates[neighbor])
+            G.add_edge(node, neighbor, weight=dist)
+
+    return G
+
+state1.graph = create_graph(state1)
+
+#operators
 
 def select_new_city(state, x, y):
     best = math.inf
@@ -148,7 +164,17 @@ def first_aid_if_necessary(state, victim, ambulance):
         return [('provide_first_aid', ambulance, victim)]
     return False
 
-# pyhop.declare_methods('travel', first_aid_if_necessary)
+def travel_m(state, ambulance, destination):
+    x = state.ambulances[ambulance]['location']
+    op_list = []
+    path, cost = shortest_path(state, x, destination)
+    if path:
+        for place in path:
+            op_list.append(('move_ambulance', ambulance, place))
+        return op_list
+    return False
+
+pyhop.declare_methods('travel', travel_m, first_aid_if_necessary)
 
 def move_ambulance_m(state, ambulance, victim):
     x = state.ambulances[ambulance]['location']
@@ -164,36 +190,17 @@ def deliver_victim(state, victim):
     if not hospital or not ambulance:
         return False
 
-
-# Create graph and add edges with Euclidean distance as weight
-def create_graph(state):
-    G = nx.Graph()
-    for node in state.coordinates:
-        G.add_node(node)
-
-    for node, neighbors in state.connections.items():
-        for neighbor in neighbors:
-            print(node, neighbor)
-            dist = distance(state.coordinates[node], state.coordinates[neighbor])
-            G.add_edge(node, neighbor, weight=dist)
-
-    return G
-
-
 # Find shortest path using Dijkstra
 def shortest_path(state, start, goal):
-    G = create_graph(state)
     try:
-        path = nx.shortest_path(G, source=start, target=goal, weight='weight')
-        cost = nx.shortest_path_length(G, source=start, target=goal, weight='weight')
+        path = nx.shortest_path(state.graph, source=start, target=goal, weight='weight')
+        cost = nx.shortest_path_length(state.graph, source=start, target=goal, weight='weight')
         return path, cost
     except nx.NetworkXNoPath:
         return None, float('inf')
 
-
 # Example usage
-path, cost = shortest_path(state1, 'L1', 'L5')
-if path:
-    print(f"Shortest path: {path}, Cost: {cost:.2f}")
-else:
-    print("No valid path found")
+opList = travel_m(state1, 'A1', 'L5')
+print(opList)
+opList = travel_m(state1, 'A1', 'L6')
+print(opList)

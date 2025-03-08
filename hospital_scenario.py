@@ -241,7 +241,8 @@ def treat_all_victims(state):
     if all(data.get('treated') for data in state.victims.values()):
         return []  # Goal satisfied → No more actions needed
     assign_goals(state)
-    return [do_step(state), treat_all_victims(state)]
+    return [('do_step',), ('treat_all_victims',)]
+
 
 import pyhop
 
@@ -259,3 +260,5 @@ pyhop.declare_methods('assign_goals', assign_goals)
 
 
 goal = [('treat_all_victims',)]
+
+pyhop.pyhop(state1, goal)

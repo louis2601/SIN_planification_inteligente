@@ -203,6 +203,7 @@ def do_step(state):
         if len(data["current_path"]) > 0:
             next_loc = data["current_path"].pop(0)
             moves.append(('move_ambulance_op', ambulance, next_loc))
+            state.ambulances[ambulance]['location'] = next_loc
 
             if not data["current_path"]:
                 moves.extend(handle_goal_completion(state, ambulance))
@@ -220,7 +221,12 @@ def handle_goal_completion(state, ambulance):
         moves.append(('load_victim_op', state.ambulances[ambulance]['victim'], ambulance))
         #update state and path
         hospital = assign_hospital(state, state.ambulances[ambulance]['victim'])
-        path, _ = shortest_path(state, state.victims[state.ambulances[ambulance]['victim']]['location'], hospital)
+        path, cost = shortest_path(state, state.victims[state.ambulances[ambulance]['victim']]['location'], hospital)
+        if path:
+            state.ambulances[ambulance]['current_path'] = path
+        else:
+            print(f"No path found for ambulance {ambulance} to hospital {hospital}")
+            return []
         state.ambulances[ambulance]['current_path'] = path
         state.ambulances[ambulance]['state'] = "to_hospital"
         state.ambulances[ambulance]['hospital'] = hospital

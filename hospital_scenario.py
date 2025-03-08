@@ -106,4 +106,48 @@ def assign_ambulance(state, victim):
 
     return best_ambulance or False
 
+def assign_hospital(state, victim):
+    """
+    Find the nearest hospital to the victim.
+
+    Args:
+        state (State): Current problem state.
+        victim (str): ID of the victim.
+
+    Returns:
+        str | bool: Hospital ID or False if none found.
+    """
+    min_distance = float('inf')
+    best_hospital = None
+    victim_loc = state.victims[victim]['location']
+
+    for hospital, data in state.hospitals.items():
+        if victim_loc in state.coordinates and data['location'] in state.coordinates:
+            dist = distance(state.coordinates[victim_loc], state.coordinates[data['location']])
+            if dist < min_distance:
+                min_distance = dist
+                best_hospital = hospital
+
+    return best_hospital or False
+
+def first_aid_if_necessary(state, victim, ambulance):
+    """
+    Return action to provide first aid if conditions are met.
+
+    Args:
+        state (State): Current problem state.
+        victim (str): Victim ID.
+        ambulance (str): Ambulance ID.
+
+    Returns:
+        list | bool: Action list or False.
+    """
+    if (state.victims[victim]['severity'] >= 7 and
+        not state.victims[victim]['first_aid_done'] and
+        state.ambulances[ambulance]['location'] == state.victims[victim]['location'] and
+        state.ambulances[ambulance]['capacity'] >= state.victims[victim]['severity']):
+        return [('provide_first_aid', ambulance, victim)]
+    return False
+
+pyhop.declare_methods(first_aid_if_necessary)
 

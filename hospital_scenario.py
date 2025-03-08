@@ -70,11 +70,12 @@ def all_victims_treated(state):
             return False
     return True
 
-def load_victim_op(state, victim, ambulance):
-    x = state.victims[victim]['location']
+def load_victim_op(state, ambulance):
+    victim = state.victims[state.ambulances[ambulance]['victim']]
+    x = victim['location']
     y = state.ambulances[ambulance]['location']
-    if x == y and state.ambulances[ambulance]['state'] == 'to_hospital' and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
-        state.victims[victim]['location'] = y
+    if x == y and state.ambulances[ambulance]['state'] == 'to_hospital' and victim['severity'] <= state.ambulances[ambulance]['capacity']:
+        victim['location'] = ambulance
         return state
     else:
         print(f"Victim {victim} is not at the same location as ambulance {ambulance}")
@@ -82,12 +83,10 @@ def load_victim_op(state, victim, ambulance):
 
 def unload_victim_op(state, ambulance):
     x = state.ambulances[ambulance]['location']
-    victim = state.ambulances[ambulance]['victim']
+    victim = state.victims[state.ambulances[ambulance]['victim']]
     hospital = state.ambulances[ambulance]['hospital']
-    print("AOOO",victim)
-    print("AOOO",victim['location'])
 
-    if x == hospital['location'] and x == victim['location']:
+    if x == hospital['location'] and ambulance == victim['location']:
         victim['location'] = hospital
         state.ambulances[ambulance]['state'] = "available"
         return state
@@ -230,7 +229,7 @@ def handle_goal_completion(state, ambulance):
         if first_aid_action:
             moves.extend(first_aid_action)
         #load victim
-        moves.append(('load_victim_op', state.ambulances[ambulance]['victim'], ambulance))
+        moves.append(('load_victim_op', ambulance))
         #update state and path
         hospital = assign_hospital(state, state.ambulances[ambulance]['victim'])
         path, cost = shortest_path(state, state.victims[state.ambulances[ambulance]['victim']]['location'], state.hospitals[hospital]['location'])
@@ -265,16 +264,9 @@ def treat_all_victims(state):
 
 import pyhop
 
-# Declarar métodos para la tarea 'treat_all_victims'
 pyhop.declare_methods('treat_all_victims', treat_all_victims)
-
-# Declarar métodos para la tarea 'do_step'
 pyhop.declare_methods('do_step', do_step)
-
-# Declarar métodos para la tarea 'handle_goal_completion'
 pyhop.declare_methods('handle_goal_completion', handle_goal_completion)
-
-# Declarar métodos para la tarea 'assign_goals'
 pyhop.declare_methods('assign_goals', assign_goals)
 
 

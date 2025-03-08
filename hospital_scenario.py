@@ -31,12 +31,30 @@ state1.connections = {
     'L6': ['L2', 'L3'],
 }
 
-#operators
+# utilities
 
 def distance(c1, c2):
     x = pow(c1['X'] - c2['X'], 2)
     y = pow(c1['Y'] - c2['Y'], 2)
     return math.sqrt(x + y)
+
+# Create graph and add edges with Euclidean distance as weight
+def create_graph(state):
+    G = nx.Graph()
+    for node in state.coordinates:
+        G.add_node(node)
+
+    for node, neighbors in state.connections.items():
+        for neighbor in neighbors:
+            print(node, neighbor)
+            dist = distance(state.coordinates[node], state.coordinates[neighbor])
+            G.add_edge(node, neighbor, weight=dist)
+
+    return G
+
+state1.graph = create_graph(state1)
+
+#operators
 
 def select_new_city(state, x, y):
     best = math.inf
@@ -155,10 +173,6 @@ def assign_goals(state):
                     path, _ = shortest_path(state, data['location'], state.victims[victim]['location'])
                     state.ambulances[ambulance]['current_path'] = path
 
-
-
-
-
 def first_aid_if_necessary(state, victim, ambulance):
     """
     Return action to provide first aid if conditions are met.
@@ -188,31 +202,14 @@ def move_ambulance_m(state, ambulance, victim):
         return [('move_ambulance', ambulance, z)]
 
 
-# Create graph and add edges with Euclidean distance as weight
-def create_graph(state):
-    G = nx.Graph()
-    for node in state.coordinates:
-        G.add_node(node)
-
-    for node, neighbors in state.connections.items():
-        for neighbor in neighbors:
-            print(node, neighbor)
-            dist = distance(state.coordinates[node], state.coordinates[neighbor])
-            G.add_edge(node, neighbor, weight=dist)
-
-    return G
-
-
 # Find shortest path using Dijkstra
 def shortest_path(state, start, goal):
-    G = create_graph(state)
     try:
-        path = nx.shortest_path(G, source=start, target=goal, weight='weight')
-        cost = nx.shortest_path_length(G, source=start, target=goal, weight='weight')
+        path = nx.shortest_path(state.graph, source=start, target=goal, weight='weight')
+        cost = nx.shortest_path_length(state.graph, source=start, target=goal, weight='weight')
         return path, cost
     except nx.NetworkXNoPath:
         return None, float('inf')
-
 
 # Example usage
 path, cost = shortest_path(state1, 'L1', 'L5')

@@ -12,7 +12,7 @@ class NoHospitalFoundException(Exception):
 #possible values(victim) for state are: "waiting", "ambulance_assigned", "treated"
 state1 = pyhop.State('state1')
 state1.ambulances = {
-    'A1': {'location': 'L2', 'capacity': 5, 'path': ['L1'], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
+    'A1': {'location': 'L2', 'capacity': 5, 'path': [], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
 }
 state1.victims = {
     'V1': {'location': 'L1', 'severity': 4, 'first_aid_done': False, 'state': "waiting"},
@@ -57,7 +57,7 @@ def shortest_path(state, start, goal):
     try:
         path = nx.shortest_path(state.graph, source=start, target=goal, weight='weight')
         cost = nx.shortest_path_length(state.graph, source=start, target=goal, weight='weight')
-        return path, cost
+        return path[1:], cost
     except nx.NetworkXNoPath:
         return None, float('inf')
 
@@ -180,7 +180,7 @@ def assign_goals(state):
                     state.victims[victim]['state'] = "ambulance_assigned"
                     #add the path to the ambulance
                     path, _ = shortest_path(state, data['location'], state.victims[victim]['location'])
-                    state.ambulances[ambulance]['current_path'] = path[1:]
+                    state.ambulances[ambulance]['current_path'] = path
 
 def first_aid_if_necessary(state, victim, ambulance):
     """

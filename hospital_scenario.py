@@ -6,8 +6,8 @@ import networkx as nx
 #possible values(victim) for state are: "waiting", "ambulance_assigned", "treated"
 state1 = pyhop.State('state1')
 state1.ambulances = {
-    'A1': {'location': 'L1', 'capacity': 5, 'available': True, 'path': ['L1'], 'state': "", 'current_path': [], 'victim': None},
-    'A2': {'location': 'L3', 'capacity': 7, 'available': True, 'path': ['L3'], 'state': "", 'current_path': [], 'victim': None},
+    'A1': {'location': 'L1', 'capacity': 5, 'available': True, 'path': ['L1'], 'state': "", 'current_path': [], 'victim': None, 'hospital': None},
+    'A2': {'location': 'L3', 'capacity': 7, 'available': True, 'path': ['L3'], 'state': "", 'current_path': [], 'victim': None, 'hospital': None},
 }
 state1.victims = {
     'V1': {'location': 'L2', 'severity': 4, 'first_aid_done': False, 'state': "waiting"},
@@ -21,7 +21,7 @@ state1.coordinates = {
     'L1': {'X': 25, 'Y': 275}, 'L2': {'X': 200, 'Y': 50}, 'L3': {'X': 250, 'Y': 325},
     'L4': {'X': 475, 'Y': 450}, 'L5': {'X': 550, 'Y': 100}, 'L6': {'X': 750, 'Y': 425},
 }
- 
+
 state1.connections = {
     'L1': ['L2', 'L3'],
     'L2': ['L3', 'L5'],
@@ -67,14 +67,14 @@ def unload_victim_op(state, victim, ambulance, hospital):
         return False
 
 def move_ambulance_op(state, ambulance, y):
-    x = state.ambulances[ambulance]['location']  
+    x = state.ambulances[ambulance]['location']
     if y in state.connection[x]:
         state.ambulances[ambulance]['location'] = y
         state.ambulances[ambulance]['path'].append(y)
         return state
     else:
         return False
-     
+
 def provide_first_aid_op(state, victim):
     state.victims[victim]['first_aid_done'] = True
     return state
@@ -229,19 +229,34 @@ def do_step(state):
             moves.append(('move_ambulance_op', ambulance, next_loc))
 
             if not data["current_path"]:
-                handle_goal_completion(state, ambulance)
+                moves.extend(handle_goal_completion(state, ambulance))
     return moves if moves else False
 
 #This should check if the ambulance reached the victim or reached the hospital and handle it
 def handle_goal_completion(state, ambulance):
+    moves = []
     if state.ambulances[ambulance]['state'] == "to_victim":
         #first aid
-        first_aid_if_necessary()
-        #loading
+        first_aid_action = first_aid_if_necessary(state, state.ambulances[ambulance]['victim'], ambulance)
+        if first_aid_action:
+            moves.extend(first_aid_action)
+        #load victim
+        moves.append(('load_victim_op', state.ambulances[ambulance]['victim'], ambulance))
         #update state and path
-    else:
+        hospital = assign_hospital(state, state.ambulances[ambulance]['victim'])
+        path, _ = shortest_path(state, state.victims[state.ambulances[ambulance]['victim']]['location'], hospital)
+        state.ambulances[ambulance]['current_path'] = path
+        state.ambulances[ambulance]['state'] = "to_hospital"
+        state.ambulances[ambulance]['hospital'] = hospital
+    elif state.ambulances[ambulance]['state'] == "to_hospital":
         #unload
+        moves.append(('unload_victim_op', state, state.victims[state.ambulances[ambulance]['victim']], ambulance, state.ambulances[ambulance]['hospital']))
         #update state, patient treated
+        state.victims[state.ambulances[ambulance]['victim']]['state'] = "treated"
+        state.ambulances[ambulance]['state'] = "available"
+        state.ambulances[ambulance]['victim'] = None
+        state.ambulances[ambulance]['hospital'] = None
+    return moves
         #ambulance available
 
 def deliver_victims(state):

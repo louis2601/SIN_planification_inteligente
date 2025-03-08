@@ -7,20 +7,17 @@ state1.ambulances = {
     'A2': {'location': 'L3', 'capacity': 7, 'available': True},
 }
 state1.victims = {
-    'V1': {'location': 'L2', 'severity': 4, 'treated': False},
-    'V2': {'location': 'L4', 'severity': 6, 'treated': False},
+    'V1': {'location': 'L2', 'severity': 4, 'first_aid_done': False, 'treated': False},
+    'V2': {'location': 'L4', 'severity': 6, 'first_aid_done': False, 'treated': False},
 }
 state1.hospitals = {
     'H1': {'location': 'L5'},
     'H2': {'location': 'L6'},
 }
 state1.coordinates = {
-    'L1': (0, 0),
-    'L2': (3, 4),
-    'L3': (5, 1),
-    'L4': (7, 6),
-    'L5': (10, 2),
-    'L6': (12, 8)
+    {'Huelva': {'X': 25, 'Y': 275}, 'Cadiz': {'X': 200, 'Y': 50}, 'Sevilla': {'X': 250, 'Y': 325},
+    'Cordoba': {'X': 475, 'Y': 450}, 'Malaga': {'X': 550, 'Y': 100}, 'Jaen': {'X': 750, 'Y': 425},
+    'Granada': {'X': 800, 'Y': 250}, 'Almeria': {'X': 1000, 'Y': 150}}
 }
 state1.connections = {
     'L1': ['L2', 'L3'],
@@ -31,4 +28,29 @@ state1.connections = {
     'L6': []
 }
 
+def distance(c1, c2):
+    x = pow(c1['X'] - c2['X'], 2)
+    y = pow(c1['Y'] - c2['Y'], 2)
+    return math.sqrt(x + y)
 
+def move_ambulance(state, ambulance, y):
+    x = state.ambulances[ambulance]['location']  
+    if y in state.connection[x]:
+        state.amubulances[ambulance]['location'] = y
+        state.path.append(y)
+        state.cost += distance(state.coordinates[x], state.coordinates[y])
+        return state
+    else:
+        return False
+     
+def provide_treatment(state, ambulance, victim):
+    if (state.ambulances[ambulance]['location'] == state.victims[victim]['location'] and
+        state.victims[victim]['first_aid_done'] == False and
+        state.victims[victim]['treated'] == False and
+        state.victim['severity'] >= 7):
+        state.victims[victim]['first_aid_done'] = True
+        return state
+    else:
+        return False 
+
+pyhop.declare_operators(move_ambulance, provide_treatment)

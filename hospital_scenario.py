@@ -2,33 +2,32 @@ import math
 import pyhop
 import networkx as nx
 
+class NoHospitalFoundException(Exception):
+    def __init__(self, victim, victim_location):
+        self.victim = victim
+        self.victim_location = victim_location
+        super().__init__(f"No hospital found for victim {victim} at location {victim_location}")
+
 #possible values(ambulance) for state are: "available", "to_victim", "to_hospital"
 #possible values(victim) for state are: "waiting", "ambulance_assigned", "treated"
 state1 = pyhop.State('state1')
 state1.ambulances = {
-    'A1': {'location': 'L1', 'capacity': 5, 'path': ['L1'], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
-    'A2': {'location': 'L3', 'capacity': 7, 'path': ['L3'], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
+    'A1': {'location': 'L2', 'capacity': 5, 'path': ['L1'], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
 }
 state1.victims = {
-    'V1': {'location': 'L2', 'severity': 4, 'first_aid_done': False, 'state': "waiting"},
-    'V2': {'location': 'L4', 'severity': 6, 'first_aid_done': False, 'state': "waiting"},
+    'V1': {'location': 'L1', 'severity': 4, 'first_aid_done': False, 'state': "waiting"},
 }
 state1.hospitals = {
-    'H1': {'location': 'L5'},
-    'H2': {'location': 'L6'},
+    'H1': {'location': 'L3'},
 }
 state1.coordinates = {
-    'L1': {'X': 25, 'Y': 275}, 'L2': {'X': 200, 'Y': 50}, 'L3': {'X': 250, 'Y': 325},
-    'L4': {'X': 475, 'Y': 450}, 'L5': {'X': 550, 'Y': 100}, 'L6': {'X': 750, 'Y': 425},
+    'L1': {'X': 50, 'Y': 50}, 'L2': {'X': 75, 'Y': 50}, 'L3': {'X': 25, 'Y': 50},
 }
 
 state1.connections = {
     'L1': ['L2', 'L3'],
-    'L2': ['L3', 'L5'],
-    'L3': ['L4', 'L5'],
-    'L4': ['L5'],
-    'L5': ['L6','L2', 'L3'],
-    'L6': ['L2', 'L3'],
+    'L2': ['L1'],
+    'L3': ['L1'],
 }
 
 # utilities
@@ -142,12 +141,14 @@ def assign_hospital(state, victim):
         victim (str): ID of the victim.
 
     Returns:
-        str | bool: Hospital ID or False if none found.
+        str: Hospital ID.
+
+    Raises:
+        NoHospitalFoundException: If no hospital is found.
     """
     min_distance = float('inf')
     best_hospital = None
     victim_loc = state.victims[victim]['location']
-
     for hospital, data in state.hospitals.items():
         if victim_loc in state.coordinates and data['location'] in state.coordinates:
             dist = distance(state.coordinates[victim_loc], state.coordinates[data['location']])
@@ -155,7 +156,10 @@ def assign_hospital(state, victim):
                 min_distance = dist
                 best_hospital = hospital
 
-    return best_hospital or False
+    if best_hospital is None:
+        raise NoHospitalFoundException(victim, victim_loc)
+
+    return best_hospital
 
 def assign_goals(state):
     #see if any victim is waiting
@@ -176,7 +180,7 @@ def assign_goals(state):
                     state.victims[victim]['state'] = "ambulance_assigned"
                     #add the path to the ambulance
                     path, _ = shortest_path(state, data['location'], state.victims[victim]['location'])
-                    state.ambulances[ambulance]['current_path'] = path
+                    state.ambulances[ambulance]['current_path'] = path[1:]
 
 def first_aid_if_necessary(state, victim, ambulance):
     """
@@ -221,7 +225,7 @@ def handle_goal_completion(state, ambulance):
         moves.append(('load_victim_op', state.ambulances[ambulance]['victim'], ambulance))
         #update state and path
         hospital = assign_hospital(state, state.ambulances[ambulance]['victim'])
-        path, cost = shortest_path(state, state.victims[state.ambulances[ambulance]['victim']]['location'], hospital)
+        path, cost = shortest_path(state, state.victims[state.ambulances[ambulance]['victim']]['location'], state.hospitals[hospital]['location'])
         if path:
             state.ambulances[ambulance]['current_path'] = path
         else:

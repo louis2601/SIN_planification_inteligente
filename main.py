@@ -63,7 +63,7 @@ def walk(state, person, city_from, city_to):
 
 def select_new_city(state, y):  # evaluation function
     x = state.car['location']
-    best = inf  # big float
+    best = math.inf  # big float
     for c in state.connection.keys():
         if c not in state.path and c in state.connection[x]:
             g = state.cost

@@ -45,13 +45,15 @@ def load_victim(state, victim, ambulance):
     else:
         return False
 
+
 def unload_victim(state, victim, ambulance, hospital):
     x = state.ambulances[ambulance]['location']
     if x == state.hospitals[hospital]['location'] and state.victims[victim]['location'] == ambulance:
         state.victims[victim]['location'] = hospital
         state.ambulances[ambulance]['available'] = True
         return state
-
+    else:
+        return False
 
 def move_ambulance(state, ambulance, y):
     x = state.ambulances[ambulance]['location']  
@@ -73,4 +75,4 @@ def provide_treatment(state, ambulance, victim):
     else:
         return False 
 
-pyhop.declare_operators(move_ambulance, provide_treatment)
+pyhop.declare_operators(move_ambulance, provide_treatment, load_victim, unload_victim)

@@ -66,17 +66,19 @@ def shortest_path(state, start, goal):
 def all_victims_treated(state):
     for victim, data in state.victims.items():
         if data['state'] != "treated":
+            print(f"Victim {victim} is not treated")
             return False
     return True
 
 def load_victim_op(state, victim, ambulance):
     x = state.victims[victim]['location']
     y = state.ambulances[ambulance]['location']
-    if x == y and state.ambulances[ambulance]['state'] == 'available' and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
+    print(x, y)
+    if x == y and state.ambulances[ambulance]['state'] == 'to_hospital' and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
         state.victims[victim]['location'] = y
-        state.ambulances[ambulance]['state'] = "to_hospital"
         return state
     else:
+        print(f"Victim {victim} is not at the same location as ambulance {ambulance}")
         return False
 
 def unload_victim_op(state, victim, ambulance, hospital):
@@ -86,6 +88,7 @@ def unload_victim_op(state, victim, ambulance, hospital):
         state.ambulances[ambulance]['state'] = "available"
         return state
     else:
+        print(f"Victim {victim} is not at the same location as hospital {hospital}")
         return False
 
 def move_ambulance_op(state, ambulance, y):
@@ -95,6 +98,7 @@ def move_ambulance_op(state, ambulance, y):
         state.ambulances[ambulance]['path'].append(y)
         return state
     else:
+        print(f"Ambulance {ambulance} cannot move to location {y}")
         return False
 
 def provide_first_aid_op(state, victim):
@@ -199,6 +203,7 @@ def first_aid_if_necessary(state, victim, ambulance):
         state.ambulances[ambulance]['location'] == state.victims[victim]['location'] and
         state.ambulances[ambulance]['capacity'] >= state.victims[victim]['severity']):
         return [('provide_first_aid_op', ambulance, victim)]
+    print(f"First aid not necessary for victim {victim}")
     return False
 
 def do_step(state):

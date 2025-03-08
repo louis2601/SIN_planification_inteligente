@@ -58,7 +58,7 @@ def unload_victim(state, victim, ambulance, hospital):
 def move_ambulance(state, ambulance, y):
     x = state.ambulances[ambulance]['location']  
     if y in state.connection[x]:
-        state.amubulances[ambulance]['location'] = y
+        state.ambulances[ambulance]['location'] = y
         state.path.append(y)
         state.cost += distance(state.coordinates[x], state.coordinates[y])
         return state
@@ -69,7 +69,7 @@ def provide_treatment(state, ambulance, victim):
     if (state.ambulances[ambulance]['location'] == state.victims[victim]['location'] and
         state.victims[victim]['first_aid_done'] == False and
         state.victims[victim]['treated'] == False and
-        state.victim['severity'] >= 7):
+        state.victims[victim]['severity'] >= 7):
         state.victims[victim]['first_aid_done'] = True
         return state
     else:

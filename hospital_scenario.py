@@ -73,7 +73,6 @@ def all_victims_treated(state):
 def load_victim_op(state, victim, ambulance):
     x = state.victims[victim]['location']
     y = state.ambulances[ambulance]['location']
-    print(x, y)
     if x == y and state.ambulances[ambulance]['state'] == 'to_hospital' and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
         state.victims[victim]['location'] = y
         return state
@@ -81,10 +80,15 @@ def load_victim_op(state, victim, ambulance):
         print(f"Victim {victim} is not at the same location as ambulance {ambulance}")
         return False
 
-def unload_victim_op(state, victim, ambulance, hospital):
+def unload_victim_op(state, ambulance):
     x = state.ambulances[ambulance]['location']
-    if x == state.hospitals[hospital]['location'] and state.victims[victim]['location'] == ambulance:
-        state.victims[victim]['location'] = hospital
+    victim = state.ambulances[ambulance]['victim']
+    hospital = state.ambulances[ambulance]['hospital']
+    print("AOOO",victim)
+    print("AOOO",victim['location'])
+
+    if x == hospital['location'] and x == victim['location']:
+        victim['location'] = hospital
         state.ambulances[ambulance]['state'] = "available"
         return state
     else:
@@ -239,7 +243,7 @@ def handle_goal_completion(state, ambulance):
         state.ambulances[ambulance]['hospital'] = hospital
     elif state.ambulances[ambulance]['state'] == "to_hospital":
         #unload
-        moves.append(('unload_victim_op', state, state.victims[state.ambulances[ambulance]['victim']], ambulance, state.ambulances[ambulance]['hospital']))
+        moves.append(('unload_victim_op', ambulance))
         #update state, patient treated
         state.victims[state.ambulances[ambulance]['victim']]['state'] = "treated"
         state.ambulances[ambulance]['state'] = "available"

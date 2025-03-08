@@ -73,7 +73,7 @@ def all_victims_treated(state):
 def load_victim_op(state, victim, ambulance):
     x = state.victims[victim]['location']
     y = state.ambulances[ambulance]['location']
-    if x == y and state.ambulances[ambulance]['available'] and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
+    if x == y and state.ambulances[ambulance]['state'] == 'available' and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
         state.victims[victim]['location'] = ambulance
         state.ambulances[ambulance]['state'] = "to_hospital"
         return state
@@ -206,7 +206,7 @@ def do_step(state):
 
             if not data["current_path"]:
                 moves.extend(handle_goal_completion(state, ambulance))
-    return moves if moves else False
+    return moves if moves else []
 
 #This should check if the ambulance reached the victim or reached the hospital and handle it
 def handle_goal_completion(state, ambulance):
@@ -237,7 +237,7 @@ def handle_goal_completion(state, ambulance):
 
 def treat_all_victims(state):
     # Check if all victims are treated
-    if all(data.get('treated') for data in state.victims.values()):
+    if all(data['state'] == "treated" for data in state.victims.values()):
         return []  # Goal satisfied → No more actions needed
     assign_goals(state)
     #print the updated states

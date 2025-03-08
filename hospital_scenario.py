@@ -64,15 +64,9 @@ def move_ambulance(state, ambulance, y):
     else:
         return False
      
-def provide_first_aid(state, ambulance, victim):
-    if (state.ambulances[ambulance]['location'] == state.victims[victim]['location'] and
-        state.victims[victim]['severity'] >= 7 and
-        state.victims[victim]['treated'] == False and
-        state.victims[victim]['first_aid_done'] == False):
-        state.victims[victim]['first_aid_done'] = True
-        return state
-    else:
-        return False 
+def provide_first_aid(state, victim):
+    state.victims[victim]['first_aid_done'] = True
+    return state
 
 pyhop.declare_operators(move_ambulance, provide_first_aid, load_victim, unload_victim)
 

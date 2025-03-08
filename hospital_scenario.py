@@ -226,7 +226,6 @@ def handle_goal_completion(state, ambulance):
         else:
             print(f"No path found for ambulance {ambulance} to hospital {hospital}")
             return []
-        state.ambulances[ambulance]['current_path'] = path
         state.ambulances[ambulance]['state'] = "to_hospital"
         state.ambulances[ambulance]['hospital'] = hospital
     elif state.ambulances[ambulance]['state'] == "to_hospital":

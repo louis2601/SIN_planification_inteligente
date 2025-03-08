@@ -3,8 +3,8 @@ import pyhop
 
 state1 = pyhop.State('state1')
 state1.ambulances = {
-    'A1': {'location': 'L1', 'capacity': 5, 'available': True},
-    'A2': {'location': 'L3', 'capacity': 7, 'available': True},
+    'A1': {'location': 'L1', 'capacity': 5, 'available': True, 'path': ['L1']},
+    'A2': {'location': 'L3', 'capacity': 7, 'available': True, 'path': ['L3']},
 }
 state1.victims = {
     'V1': {'location': 'L2', 'severity': 4, 'first_aid_done': False, 'treated': False},
@@ -15,10 +15,11 @@ state1.hospitals = {
     'H2': {'location': 'L6'},
 }
 state1.coordinates = {
-    {'Huelva': {'X': 25, 'Y': 275}, 'Cadiz': {'X': 200, 'Y': 50}, 'Sevilla': {'X': 250, 'Y': 325},
+    'Huelva': {'X': 25, 'Y': 275}, 'Cadiz': {'X': 200, 'Y': 50}, 'Sevilla': {'X': 250, 'Y': 325},
     'Cordoba': {'X': 475, 'Y': 450}, 'Malaga': {'X': 550, 'Y': 100}, 'Jaen': {'X': 750, 'Y': 425},
-    'Granada': {'X': 800, 'Y': 250}, 'Almeria': {'X': 1000, 'Y': 150}}
+    'Granada': {'X': 800, 'Y': 250}, 'Almeria': {'X': 1000, 'Y': 150}
 }
+ 
 state1.connections = {
     'L1': ['L2', 'L3'],
     'L2': ['L3', 'L5'],
@@ -58,8 +59,7 @@ def move_ambulance(state, ambulance, y):
     x = state.ambulances[ambulance]['location']  
     if y in state.connection[x]:
         state.ambulances[ambulance]['location'] = y
-        state.path.append(y)
-        state.cost += distance(state.coordinates[x], state.coordinates[y])
+        state.ambulances[ambulance]['path'].append(y)
         return state
     else:
         return False

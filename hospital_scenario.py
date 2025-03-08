@@ -54,10 +54,16 @@ def create_graph(state):
 
 state1.graph = create_graph(state1)
 
-#operators
+# Find shortest path using Dijkstra
+def shortest_path(state, start, goal):
+    try:
+        path = nx.shortest_path(state.graph, source=start, target=goal, weight='weight')
+        cost = nx.shortest_path_length(state.graph, source=start, target=goal, weight='weight')
+        return path, cost
+    except nx.NetworkXNoPath:
+        return None, float('inf')
 
-def select_new_city(state, x, y):
-    best = math.inf
+#operators
 
 def all_victims_treated(state):
     for victim, data in state.victims.items():
@@ -97,7 +103,7 @@ def provide_first_aid_op(state, victim):
     state.victims[victim]['first_aid_done'] = True
     return state
 
-pyhop.declare_operators(move_ambulance_op, provide_first_aid_op, load_victim_op, unload_victim_op)
+pyhop.declare_operators(move_ambulance_op, provide_first_aid_op, load_victim_op, unload_victim_op, all_victims_treated)
 
 #methods
 
@@ -192,32 +198,6 @@ def first_aid_if_necessary(state, victim, ambulance):
         return [('provide_first_aid_op', ambulance, victim)]
     return False
 
-# pyhop.declare_methods('travel', first_aid_if_necessary)
-
-def move_ambulance_m(state, ambulance, victim):
-    x = state.ambulances[ambulance]['location']
-    y = state.victims[victim]['location']
-    if x != y:
-        z = select_new_city(state, y)
-        return [('move_ambulance', ambulance, z)]
-
-
-# Find shortest path using Dijkstra
-def shortest_path(state, start, goal):
-    try:
-        path = nx.shortest_path(state.graph, source=start, target=goal, weight='weight')
-        cost = nx.shortest_path_length(state.graph, source=start, target=goal, weight='weight')
-        return path, cost
-    except nx.NetworkXNoPath:
-        return None, float('inf')
-
-# Example usage
-path, cost = shortest_path(state1, 'L1', 'L5')
-if path:
-    print(f"Shortest path: {path}, Cost: {cost:.2f}")
-else:
-    print("No valid path found")
-
 def do_step(state):
     moves = []
     for ambulance, data in state.ambulances.items():
@@ -263,6 +243,19 @@ def treat_all_victims(state):
     assign_goals(state)
     return [do_step(state), treat_all_victims(state)]
 
+import pyhop
+
+# Declarar métodos para la tarea 'treat_all_victims'
 pyhop.declare_methods('treat_all_victims', treat_all_victims)
+
+# Declarar métodos para la tarea 'do_step'
+pyhop.declare_methods('do_step', do_step)
+
+# Declarar métodos para la tarea 'handle_goal_completion'
+pyhop.declare_methods('handle_goal_completion', handle_goal_completion)
+
+# Declarar métodos para la tarea 'assign_goals'
+pyhop.declare_methods('assign_goals', assign_goals)
+
 
 goal = [('treat_all_victims',)]

@@ -73,8 +73,20 @@ def all_victims_treated(state):
 def load_victim_op(state, victim, ambulance):
     x = state.victims[victim]['location']
     y = state.ambulances[ambulance]['location']
-    if x == y and state.ambulances[ambulance]['state'] == 'to_hospital' and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
-        state.victims[victim]['location'] = y
+    if x == y and state.ambulances[ambulance]['state'] == 'to_victim' and state.victims[victim]['severity'] <= state.ambulances[ambulance]['capacity']:
+        # update state and path
+        hospital = assign_hospital(state, state.ambulances[ambulance]['victim'])
+        path, cost = shortest_path(state, state.victims[state.ambulances[ambulance]['victim']]['location'],
+                                   state.hospitals[hospital]['location'])
+        if path:
+            state.ambulances[ambulance]['current_path'] = path
+        else:
+            print(f"No path found for ambulance {ambulance} to hospital {hospital}")
+            return []
+        state.ambulances[ambulance]['state'] = "to_hospital"
+        state.ambulances[ambulance]['hospital'] = hospital
+        state.victims[victim]['location'] = ambulance
+
         return state
     else:
         print(f"Victim {victim} is not at the same location as ambulance {ambulance}")
@@ -84,12 +96,14 @@ def unload_victim_op(state, ambulance):
     x = state.ambulances[ambulance]['location']
     victim = state.ambulances[ambulance]['victim']
     hospital = state.ambulances[ambulance]['hospital']
-    print("AOOO",victim)
-    print("AOOO",victim['location'])
 
-    if x == hospital['location'] and x == victim['location']:
+    if x == hospital['location'] and ambulance == victim['location']:
         victim['location'] = hospital
+        # update state, patient treated
+        state.ambulances[ambulance]['victim'] = None
+        state.ambulances[ambulance]['hospital'] = None
         state.ambulances[ambulance]['state'] = "available"
+        state.victims[state.ambulances[ambulance]['victim']]['state'] = "treated"
         return state
     else:
         print(f"Victim {victim} is not at the same location as hospital {hospital}")
@@ -158,6 +172,7 @@ def assign_hospital(state, victim):
     best_hospital = None
     victim_loc = state.victims[victim]['location']
     for hospital, data in state.hospitals.items():
+        print("IWBFPQ", victim_loc)
         if victim_loc in state.coordinates and data['location'] in state.coordinates:
             dist = distance(state.coordinates[victim_loc], state.coordinates[data['location']])
             if dist < min_distance:
@@ -231,24 +246,9 @@ def handle_goal_completion(state, ambulance):
             moves.extend(first_aid_action)
         #load victim
         moves.append(('load_victim_op', state.ambulances[ambulance]['victim'], ambulance))
-        #update state and path
-        hospital = assign_hospital(state, state.ambulances[ambulance]['victim'])
-        path, cost = shortest_path(state, state.victims[state.ambulances[ambulance]['victim']]['location'], state.hospitals[hospital]['location'])
-        if path:
-            state.ambulances[ambulance]['current_path'] = path
-        else:
-            print(f"No path found for ambulance {ambulance} to hospital {hospital}")
-            return []
-        state.ambulances[ambulance]['state'] = "to_hospital"
-        state.ambulances[ambulance]['hospital'] = hospital
     elif state.ambulances[ambulance]['state'] == "to_hospital":
         #unload
         moves.append(('unload_victim_op', ambulance))
-        #update state, patient treated
-        state.victims[state.ambulances[ambulance]['victim']]['state'] = "treated"
-        state.ambulances[ambulance]['state'] = "available"
-        state.ambulances[ambulance]['victim'] = None
-        state.ambulances[ambulance]['hospital'] = None
     return moves
         #ambulance available
 

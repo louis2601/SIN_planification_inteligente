@@ -16,6 +16,7 @@ state1.ambulances = {
 }
 state1.victims = {
     'V1': {'location': 'L1', 'severity': 4, 'first_aid_done': False, 'state': "waiting"},
+    'V2': {'location': 'L2', 'severity': 4, 'first_aid_done': False, 'state': "waiting"},
 }
 state1.hospitals = {
     'H1': {'location': 'L3'},
@@ -29,6 +30,33 @@ state1.connections = {
     'L2': ['L1'],
     'L3': ['L1'],
 }
+
+#possible values(ambulance) for state are: "available", "to_victim", "to_hospital"
+#possible values(victim) for state are: "waiting", "ambulance_assigned", "treated"
+state2 = pyhop.State('state1')
+state2.ambulances = {
+    'A1': {'location': 'L4', 'capacity': 5, 'path': [], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None}
+
+}
+state2.victims = {
+    'V1': {'location': 'L1', 'severity': 4, 'first_aid_done': False, 'state': "waiting"},
+    'V2': {'location': 'L2', 'severity': 4, 'first_aid_done': False, 'state': "waiting"},
+
+}
+state2.hospitals = {
+    'H1': {'location': 'L3'},
+}
+state2.coordinates = {
+    'L1': {'X': 50, 'Y': 50}, 'L2': {'X': 75, 'Y': 50}, 'L3': {'X': 100, 'Y': 50},'L4': {'X': 25, 'Y': 50},
+}
+
+state2.connections = {
+    'L1': ['L2', 'L4'],
+    'L2': ['L1', 'L3'],
+    'L3': ['L2'],
+    'L4': ['L1'],
+}
+
 
 # utilities
 
@@ -51,6 +79,7 @@ def create_graph(state):
     return G
 
 state1.graph = create_graph(state1)
+state2.graph = create_graph(state2)
 
 # Find shortest path using Dijkstra
 def shortest_path(state, start, goal):
@@ -141,7 +170,6 @@ def assign_victim(state, ambulance):
     min_distance = float('inf')
     best_victim = None
     ambulance_loc = state.ambulances[ambulance]['location']
-
     for victim, data in state.victims.items():
         if (data['severity'] <= state.ambulances[ambulance]['capacity'] and
                 data['state'] == "waiting" and state.ambulances[ambulance]['state'] == "available"):
@@ -280,4 +308,4 @@ pyhop.declare_methods('assign_goals', assign_goals)
 
 goal = [('treat_all_victims',)]
 
-pyhop.pyhop(state1, goal, verbose=3)
+pyhop.pyhop(state2, goal, verbose=3)

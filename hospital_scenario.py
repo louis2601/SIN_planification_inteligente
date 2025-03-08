@@ -16,18 +16,17 @@ state1.hospitals = {
     'H2': {'location': 'L6'},
 }
 state1.coordinates = {
-    'Huelva': {'X': 25, 'Y': 275}, 'Cadiz': {'X': 200, 'Y': 50}, 'Sevilla': {'X': 250, 'Y': 325},
-    'Cordoba': {'X': 475, 'Y': 450}, 'Malaga': {'X': 550, 'Y': 100}, 'Jaen': {'X': 750, 'Y': 425},
-    'Granada': {'X': 800, 'Y': 250}, 'Almeria': {'X': 1000, 'Y': 150}
+    'L1': {'X': 25, 'Y': 275}, 'L2': {'X': 200, 'Y': 50}, 'L3': {'X': 250, 'Y': 325},
+    'L4': {'X': 475, 'Y': 450}, 'L5': {'X': 550, 'Y': 100}, 'L6': {'X': 750, 'Y': 425},
 }
  
 state1.connections = {
     'L1': ['L2', 'L3'],
     'L2': ['L3', 'L5'],
-    'L3': ['L4'],
+    'L3': ['L4', 'L5'],
     'L4': ['L5'],
-    'L5': ['L6'],
-    'L6': []
+    'L5': ['L6',['L2', 'L3'],],
+    'L6': ['L2', 'L3'],
 }
 
 #operators
@@ -149,7 +148,7 @@ def first_aid_if_necessary(state, victim, ambulance):
         return [('provide_first_aid', ambulance, victim)]
     return False
 
-pyhop.declare_methods(first_aid_if_necessary)
+# pyhop.declare_methods('travel', first_aid_if_necessary)
 
 def move_ambulance_m(state, ambulance, victim):
     x = state.ambulances[ambulance]['location']
@@ -174,6 +173,7 @@ def create_graph(state):
 
     for node, neighbors in state.connections.items():
         for neighbor in neighbors:
+            print(node, neighbor)
             dist = distance(state.coordinates[node], state.coordinates[neighbor])
             G.add_edge(node, neighbor, weight=dist)
 
@@ -192,7 +192,7 @@ def shortest_path(state, start, goal):
 
 
 # Example usage
-path, cost = shortest_path(state, 'L1', 'L5')
+path, cost = shortest_path(state1, 'L1', 'L5')
 if path:
     print(f"Shortest path: {path}, Cost: {cost:.2f}")
 else:

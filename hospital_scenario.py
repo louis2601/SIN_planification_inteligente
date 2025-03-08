@@ -59,7 +59,7 @@ state1.graph = create_graph(state1)
 def select_new_city(state, x, y):
     best = math.inf
 
-def all_victims_treated_op(state):
+def all_victims_treated(state):
     for victim, data in state.victims.items():
         if data['state'] != "treated":
             return False
@@ -256,7 +256,13 @@ def handle_goal_completion(state, ambulance):
     return moves
         #ambulance available
 
-def deliver_victims(state):
-    while not all_victims_treated(state):
-        assign_goals()
-        #do steps now
+def treat_all_victims(state):
+    # Check if all victims are treated
+    if all(data.get('treated') for data in state.victims.values()):
+        return []  # Goal satisfied → No more actions needed
+    assign_goals(state)
+    return [do_step(state), treat_all_victims(state)]
+
+pyhop.declare_methods('treat_all_victims', treat_all_victims)
+
+goal = [('treat_all_victims',)]

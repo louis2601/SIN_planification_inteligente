@@ -150,7 +150,6 @@ def create_graph(state):
         for neighbor in neighbors:
             dist = distance(state.coordinates[node], state.coordinates[neighbor])
             G.add_edge(node, neighbor, weight=dist)
-
     return G
 
 state1.graph = create_graph(state1)
@@ -243,20 +242,18 @@ def assign_victim(state, ambulance):
     Returns:
         str | bool: Assigned victim ID or False if none found.
     """
-    min_distance = float('inf')
+    min_cost = float('inf')
     best_victim = None
     ambulance_loc = state.ambulances[ambulance]['location']
     for victim, data in state.victims.items():
         if (data['severity'] <= state.ambulances[ambulance]['capacity'] and
                 data['state'] == "waiting" and state.ambulances[ambulance]['state'] == "available"):
-
-            dist = distance(state.coordinates[ambulance_loc], state.coordinates[data['location']])
-            if dist < min_distance:
-                min_distance = dist
+            _, cost = shortest_path(state, ambulance_loc, data['location'])
+            if cost < min_cost:
+                min_cost = cost
                 best_victim = victim
 
     return best_victim or False
-
 
 def assign_hospital(state, victim):
     """
@@ -272,14 +269,14 @@ def assign_hospital(state, victim):
     Raises:
         NoHospitalFoundException: If no hospital is found.
     """
-    min_distance = float('inf')
+    min_cost = float('inf')
     best_hospital = None
     victim_loc = victim['location']
     for hospital, data in state.hospitals.items():
         if victim_loc in state.coordinates and data['location'] in state.coordinates:
-            dist = distance(state.coordinates[victim_loc], state.coordinates[data['location']])
-            if dist < min_distance:
-                min_distance = dist
+            _, cost = shortest_path(state, victim_loc, data['location'])
+            if cost < min_cost:
+                min_cost = cost
                 best_hospital = hospital
 
     if best_hospital is None:
@@ -320,13 +317,11 @@ def first_aid_if_necessary(state, victim, ambulance):
     Returns:
         list | bool: Action list or False.
     """
-    print(state.ambulances[ambulance]['location'], state.victims[victim]['location'])
     if (state.victims[victim]['severity'] >= 7 and
         not state.victims[victim]['first_aid_done'] and
         state.ambulances[ambulance]['location'] == state.victims[victim]['location'] and
         state.ambulances[ambulance]['capacity'] >= state.victims[victim]['severity']):
         return [('provide_first_aid_op', victim)]
-    print(f"First aid not necessary for victim {victim}")
     return []
 
 pyhop.declare_methods('first_aid_necessary', first_aid_if_necessary)
@@ -340,7 +335,6 @@ def do_step(state):
 
             if not data["current_path"]:
                 moves.extend(handle_goal_completion(state, ambulance))
-    print("MOVES:", moves)
     return moves if moves else []
 
 #This should check if the ambulance reached the victim or reached the hospital and handle it
@@ -349,7 +343,6 @@ def handle_goal_completion(state, ambulance):
     if state.ambulances[ambulance]['state'] == "to_victim":
         #first aid
         first_aid_action = first_aid_if_necessary(state, state.ambulances[ambulance]['victim'], ambulance)
-        print("First aid action HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", state.ambulances[ambulance]['location'])
         if first_aid_action:
             moves.extend(first_aid_action)
         #load victim
@@ -366,13 +359,7 @@ def treat_all_victims(state):
     if all(data['state'] == "treated" for data in state.victims.values()):
         return []  # Goal satisfied → No more actions needed
     assign_goals(state)
-    #print the updated states
-    for ambulance, data in state.ambulances.items():
-        print(ambulance, data)
     return [('do_step',), ('treat_all_victims',)]
-
-
-import pyhop
 
 pyhop.declare_methods('treat_all_victims', treat_all_victims)
 pyhop.declare_methods('do_step', do_step)

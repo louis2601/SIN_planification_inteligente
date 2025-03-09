@@ -56,6 +56,40 @@ state2.connections = {
     'L3': ['L2'],
     'L4': ['L1'],
 }
+#state3 (Paper)
+#possible values(ambulance) for state are: "available", "to_victim", "to_hospital"
+#possible values(victim) for state are: "waiting", "ambulance_assigned", "treated"
+state3 = pyhop.State('state3')
+state3.ambulances = {
+    'A1': {'location': 'L7', 'capacity': 9, 'path': [], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
+    'A2': {'location': 'L5', 'capacity': 6, 'path': [], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
+}
+state3.victims = {
+    'V1': {'location': 'L1', 'severity': 8, 'first_aid_done': False, 'state': "waiting"},
+    'V2': {'location': 'L6', 'severity': 4, 'first_aid_done': False, 'state': "waiting"},
+    'V3': {'location': 'L3', 'severity': 6, 'first_aid_done': False, 'state': "waiting"},
+}
+state3.hospitals = {
+    'H1': {'location': 'L7'},
+    'H2': {'location': 'L8'},
+}
+state3.coordinates = {
+    'L1': {'X': 10, 'Y': 20}, 'L2': {'X': 20, 'Y': 20}, 'L3': {'X': 30, 'Y': 20}, 'L4': {'X': 20, 'Y': 10}, 'L5': {'X': 10, 'Y': 0},
+    'L6': {'X': 30, 'Y': 0}, 'L7': {'X': 40, 'Y': 10}, 'L8': {'X': 0, 'Y': 10}
+}
+
+state3.connections = {
+    'L1': ['L2', 'L5', 'L8'],
+    'L2': ['L1', 'L3', 'L4'],
+    'L3': ['L2', 'L6', 'L7'],
+    'L4': ['L2', 'L5', 'L6'],
+    'L5': ['L1', 'L4', 'L6', 'L8'],
+    'L6': ['L3', 'L4', 'L5', 'L7'],
+    'L7': ['L3', 'L6'],
+    'L8': ['L1', 'L5'],
+}
+
+
 
 
 # utilities
@@ -80,6 +114,7 @@ def create_graph(state):
 
 state1.graph = create_graph(state1)
 state2.graph = create_graph(state2)
+state3.graph = create_graph(state3)
 
 # Find shortest path using Dijkstra
 def shortest_path(state, start, goal):
@@ -125,7 +160,6 @@ def unload_victim_op(state, ambulance):
     x = state.ambulances[ambulance]['location']
     victim = state.ambulances[ambulance]['victim']
     hospital = state.hospitals[state.ambulances[ambulance]['hospital']]
-    print("FINALL", state)
     if x == hospital['location'] and ambulance == state.victims[victim]['location']:
         state.victims[victim]['location'] = hospital
         # update state, patient treated
@@ -244,6 +278,7 @@ def first_aid_if_necessary(state, victim, ambulance):
     Returns:
         list | bool: Action list or False.
     """
+    print(state.ambulances[ambulance]['location'], state.victims[victim]['location'])
     if (state.victims[victim]['severity'] >= 7 and
         not state.victims[victim]['first_aid_done'] and
         state.ambulances[ambulance]['location'] == state.victims[victim]['location'] and
@@ -269,6 +304,7 @@ def handle_goal_completion(state, ambulance):
     if state.ambulances[ambulance]['state'] == "to_victim":
         #first aid
         first_aid_action = first_aid_if_necessary(state, state.ambulances[ambulance]['victim'], ambulance)
+        print("First aid action HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", state.ambulances[ambulance]['state'])
         if first_aid_action:
             moves.extend(first_aid_action)
         #load victim
@@ -300,4 +336,4 @@ pyhop.declare_methods('assign_goals', assign_goals)
 
 goal = [('treat_all_victims',)]
 
-pyhop.pyhop(state2, goal, verbose=3)
+pyhop.pyhop(state3, goal, verbose=3)

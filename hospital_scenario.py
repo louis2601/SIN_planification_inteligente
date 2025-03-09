@@ -283,9 +283,11 @@ def first_aid_if_necessary(state, victim, ambulance):
         not state.victims[victim]['first_aid_done'] and
         state.ambulances[ambulance]['location'] == state.victims[victim]['location'] and
         state.ambulances[ambulance]['capacity'] >= state.victims[victim]['severity']):
-        return [('provide_first_aid_op', ambulance, victim)]
+        return [('provide_first_aid_op', victim)]
     print(f"First aid not necessary for victim {victim}")
-    return False
+    return []
+
+pyhop.declare_methods('first_aid_necessary', first_aid_if_necessary)
 
 def do_step(state):
     moves = []
@@ -296,6 +298,7 @@ def do_step(state):
 
             if not data["current_path"]:
                 moves.extend(handle_goal_completion(state, ambulance))
+    print("MOVES:", moves)
     return moves if moves else []
 
 #This should check if the ambulance reached the victim or reached the hospital and handle it
@@ -304,10 +307,11 @@ def handle_goal_completion(state, ambulance):
     if state.ambulances[ambulance]['state'] == "to_victim":
         #first aid
         first_aid_action = first_aid_if_necessary(state, state.ambulances[ambulance]['victim'], ambulance)
-        print("First aid action HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", state.ambulances[ambulance]['state'])
+        print("First aid action HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", state.ambulances[ambulance]['location'])
         if first_aid_action:
             moves.extend(first_aid_action)
         #load victim
+        moves.append(('first_aid_necessary', state.ambulances[ambulance]['victim'], ambulance))
         moves.append(('load_victim_op', ambulance))
     elif state.ambulances[ambulance]['state'] == "to_hospital":
         #unload

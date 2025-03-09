@@ -88,7 +88,48 @@ state3.connections = {
     'L7': ['L3', 'L6'],
     'L8': ['L1', 'L5'],
 }
+#state4 (Paper) big example
+state4 = pyhop.State('state4')
+state4.ambulances = {
+    'A1': {'location': 'L5', 'capacity': 10, 'path': [], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
+    'A2': {'location': 'L7', 'capacity': 7, 'path': [], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
+    'A3': {'location': 'L4', 'capacity': 4, 'path': [], 'state': "available", 'current_path': [], 'victim': None, 'hospital': None},
+}
+state4.victims = {
+    'V1': {'location': 'L2', 'severity': 9, 'first_aid_done': False, 'state': "waiting"},
+    'V2': {'location': 'L2', 'severity': 8, 'first_aid_done': False, 'state': "waiting"},
+    'V3': {'location': 'L8', 'severity': 6, 'first_aid_done': False, 'state': "waiting"},
+    'V4': {'location': 'L9', 'severity': 3, 'first_aid_done': False, 'state': "waiting"},
+    'V5': {'location': 'L14', 'severity': 2, 'first_aid_done': False, 'state': "waiting"},
+    'V6': {'location': 'L13', 'severity': 5, 'first_aid_done': False, 'state': "waiting"},
+}
+state4.hospitals = {
+    'H1': {'location': 'L4'},
+    'H2': {'location': 'L5'},
+    'H3': {'location': 'L7'},
+}
+state4.coordinates = {
+    'L1': {'X': 1, 'Y': 20}, 'L2': {'X': 7, 'Y': 20}, 'L3': {'X': 13, 'Y': 20}, 'L4': {'X': 20, 'Y': 20}, 'L5': {'X': 0, 'Y': 15},
+    'L6': {'X': 10, 'Y': 0}, 'L7': {'X': 10, 'Y': 26}, 'L8': {'X': 3, 'Y': 24}, 'L9': {'X': 15, 'Y': 7}, 'L10': {'X': 14, 'Y': 16},
+    'L11': {'X': 19, 'Y': 14}, 'L12': {'X': 6, 'Y': 16}, 'L13': {'X': 11, 'Y': 13}, 'L14': {'X': 5, 'Y': 10}
+}
 
+state4.connections = {
+    'L1': ['L2', 'L5', 'L8'],
+    'L2': ['L1', 'L3', 'L5', 'L7', 'L8', 'L12'],
+    'L3': ['L2', 'L4', 'L7', 'L10'],
+    'L4': ['L3', 'L11'],
+    'L5': ['L1', 'L2', 'L14'],
+    'L6': ['L9', 'L14'],
+    'L7': ['L2', 'L3'],
+    'L8': ['L1', 'L2'],
+    'L9': ['L6', 'L10', 'L11'],
+    'L10': ['L3', 'L9', 'L13'],
+    'L11': ['L4', 'L9'],
+    'L12': ['L2', 'L13'],
+    'L13': ['L10', 'L12'],
+    'L14': ['L5', 'L6'],
+}
 
 
 
@@ -115,6 +156,7 @@ def create_graph(state):
 state1.graph = create_graph(state1)
 state2.graph = create_graph(state2)
 state3.graph = create_graph(state3)
+state4.graph = create_graph(state4)
 
 # Find shortest path using Dijkstra
 def shortest_path(state, start, goal):
@@ -340,4 +382,4 @@ pyhop.declare_methods('assign_goals', assign_goals)
 
 goal = [('treat_all_victims',)]
 
-pyhop.pyhop(state3, goal, verbose=3)
+pyhop.pyhop(state4, goal, verbose=3)

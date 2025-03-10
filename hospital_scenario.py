@@ -204,6 +204,25 @@ def shortest_path(state, start, goal):
     except nx.NetworkXNoPath:
         return None, float('inf')
 
+def assign_hospital(state, victim):
+    """
+    Find the nearest hospital to the given victim. Raises NoHospitalFoundException if none exists.
+    """
+    min_cost = float('inf')
+    best_hospital = None
+    victim_loc = victim['location']
+
+    for hospital, data in state.hospitals.items():
+        if victim_loc in state.coordinates and data['location'] in state.coordinates:
+            _, cost = shortest_path(state, victim_loc, data['location'])
+            if cost < min_cost:
+                min_cost = cost
+                best_hospital = hospital
+
+    if best_hospital is None:
+        raise NoHospitalFoundException(victim, victim_loc)
+
+    return best_hospital
 
 # Build graphs for each sample state
 state1.graph = create_graph(state1)
@@ -240,18 +259,6 @@ def op_assign_victim(state, ambulance, victim):
         return state
 
     return False
-
-
-def all_victims_treated(state):
-    """
-    Operator-like checker: returns True if all victims are in 'treated' state, else False.
-    """
-    for victim, data in state.victims.items():
-        if data['state'] != "treated":
-            print(f"Victim {victim} is not treated")
-            return False
-    return True
-
 
 def load_victim_op(state, ambulance):
     """
@@ -328,14 +335,12 @@ def provide_first_aid_op(state, victim):
     state.victims[victim]['first_aid_done'] = True
     return state
 
-
 pyhop.declare_operators(
     op_assign_victim,
     move_ambulance_op,
     provide_first_aid_op,
     load_victim_op,
-    unload_victim_op,
-    all_victims_treated
+    unload_victim_op
 )
 
 
@@ -363,28 +368,6 @@ def assign_victim(state, ambulance):
                 best_victim = victim
 
     return best_victim or False
-
-
-def assign_hospital(state, victim):
-    """
-    Find the nearest hospital to the given victim. Raises NoHospitalFoundException if none exists.
-    """
-    min_cost = float('inf')
-    best_hospital = None
-    victim_loc = victim['location']
-
-    for hospital, data in state.hospitals.items():
-        if victim_loc in state.coordinates and data['location'] in state.coordinates:
-            _, cost = shortest_path(state, victim_loc, data['location'])
-            if cost < min_cost:
-                min_cost = cost
-                best_hospital = hospital
-
-    if best_hospital is None:
-        raise NoHospitalFoundException(victim, victim_loc)
-
-    return best_hospital
-
 
 def assign_goals(state):
     """
@@ -481,11 +464,21 @@ def treat_all_victims(state):
         ('treat_all_victims',)
     ]
 
+def all_victims_treated(state):
+    """
+    Operator-like checker: returns True if all victims are in 'treated' state, else False.
+    """
+    for victim, data in state.victims.items():
+        if data['state'] != "treated":
+            print(f"Victim {victim} is not treated")
+            return False
+    return True
 
 pyhop.declare_methods('treat_all_victims', treat_all_victims)
 pyhop.declare_methods('do_step', do_step)
 pyhop.declare_methods('handle_goal_completion', handle_goal_completion)
 pyhop.declare_methods('assign_goals', assign_goals)
+pyhop.declare_methods('all_victims_treated', all_victims_treated)
 
 
 # ------------------------------------------------------------------------------------

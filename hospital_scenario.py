@@ -224,6 +224,27 @@ def assign_hospital(state, victim):
 
     return best_hospital
 
+def assign_victim(state, ambulance):
+    """
+    Find the nearest waiting victim that the ambulance can handle, given capacity.
+    Returns the victim ID or False if none is found.
+    """
+    min_cost = float('inf')
+    best_victim = None
+    ambulance_loc = state.ambulances[ambulance]['location']
+
+    for victim, data in state.victims.items():
+        if (data['state'] == "waiting" and
+            state.ambulances[ambulance]['state'] == "available" and
+            data['severity'] <= state.ambulances[ambulance]['capacity']):
+
+            _, cost = shortest_path(state, ambulance_loc, data['location'])
+            if cost < min_cost:
+                min_cost = cost
+                best_victim = victim
+
+    return best_victim or False
+
 # Build graphs for each sample state
 state1.graph = create_graph(state1)
 state2.graph = create_graph(state2)
@@ -235,7 +256,7 @@ state4.graph = create_graph(state4)
 # Operators
 # ------------------------------------------------------------------------------------
 
-def op_assign_victim(state, ambulance, victim):
+def assign_victim_op(state, ambulance, victim):
     """
     Operator: Assign a waiting victim to an available ambulance if capacity allows.
     Updates the ambulance's state to 'to_victim' and the victim's state to 'ambulance_assigned'.
@@ -336,7 +357,7 @@ def provide_first_aid_op(state, victim):
     return state
 
 pyhop.declare_operators(
-    op_assign_victim,
+    assign_victim_op,
     move_ambulance_op,
     provide_first_aid_op,
     load_victim_op,
@@ -348,32 +369,11 @@ pyhop.declare_operators(
 # Methods
 # ------------------------------------------------------------------------------------
 
-def assign_victim(state, ambulance):
-    """
-    Find the nearest waiting victim that the ambulance can handle, given capacity.
-    Returns the victim ID or False if none is found.
-    """
-    min_cost = float('inf')
-    best_victim = None
-    ambulance_loc = state.ambulances[ambulance]['location']
-
-    for victim, data in state.victims.items():
-        if (data['state'] == "waiting" and
-            state.ambulances[ambulance]['state'] == "available" and
-            data['severity'] <= state.ambulances[ambulance]['capacity']):
-
-            _, cost = shortest_path(state, ambulance_loc, data['location'])
-            if cost < min_cost:
-                min_cost = cost
-                best_victim = victim
-
-    return best_victim or False
-
 def assign_goals(state):
     """
     Compound task: Assign an available ambulance to any waiting victim.
     - If no victim is waiting, returns [] (nothing to do).
-    - If an ambulance can be assigned, returns op_assign_victim + (assign_goals).
+    - If an ambulance can be assigned, returns assign_victim_op + (assign_goals).
     - Otherwise returns empty list.
     """
     any_waiting = any(data['state'] == "waiting" for data in state.victims.values())
@@ -386,7 +386,7 @@ def assign_goals(state):
             victim = assign_victim(state, ambulance)
             if victim:
                 return [
-                    ('op_assign_victim', ambulance, victim),
+                    ('assign_victim_op', ambulance, victim),
                     ('assign_goals',)
                 ]
     return []
@@ -403,10 +403,6 @@ def first_aid_if_necessary(state, victim, ambulance):
         state.ambulances[ambulance]['capacity'] >= state.victims[victim]['severity']):
         return [('provide_first_aid_op', victim)]
     return []
-
-
-pyhop.declare_methods('first_aid_necessary', first_aid_if_necessary)
-
 
 def do_step(state):
     """
@@ -464,22 +460,11 @@ def treat_all_victims(state):
         ('treat_all_victims',)
     ]
 
-def all_victims_treated(state):
-    """
-    Operator-like checker: returns True if all victims are in 'treated' state, else False.
-    """
-    for victim, data in state.victims.items():
-        if data['state'] != "treated":
-            print(f"Victim {victim} is not treated")
-            return False
-    return True
-
+pyhop.declare_methods('first_aid_necessary', first_aid_if_necessary)
 pyhop.declare_methods('treat_all_victims', treat_all_victims)
 pyhop.declare_methods('do_step', do_step)
 pyhop.declare_methods('handle_goal_completion', handle_goal_completion)
 pyhop.declare_methods('assign_goals', assign_goals)
-pyhop.declare_methods('all_victims_treated', all_victims_treated)
-
 
 # ------------------------------------------------------------------------------------
 # Example Usage
